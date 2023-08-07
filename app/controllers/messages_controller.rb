@@ -11,7 +11,13 @@ class MessagesController < ApplicationController
     @message = Message.new
   end
 
-  def edit; end
+  def edit
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.update(@message, partial: 'messages/form', locals: { message: @message })
+      end
+    end
+  end
 
   def create
     @message = Message.new(message_params)
@@ -41,6 +47,9 @@ class MessagesController < ApplicationController
   def update
     respond_to do |format|
       if @message.update(message_params)
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.update(@message, partial: 'messages/message', locals: { message: @message })
+        end
         format.html { redirect_to message_url(@message), notice: 'Message was successfully updated.' }
         format.json { render :show, status: :ok, location: @message }
       else
@@ -52,7 +61,6 @@ class MessagesController < ApplicationController
 
   def destroy
     @message.destroy
-
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.remove("message_#{@message.id}") }
       format.html { redirect_to messages_url, notice: 'Message was successfully destroyed.' }

@@ -2,7 +2,7 @@ class MessagesController < ApplicationController
   before_action :set_message, only: %i[show edit update destroy]
 
   def index
-    @messages = Message.all
+    @messages = Message.all.order(created_at: :desc)
   end
 
   def show; end
@@ -20,7 +20,8 @@ class MessagesController < ApplicationController
       if @message.save
         format.turbo_stream do
           render turbo_stream: [
-            turbo_stream.update('new_message', partial: 'messages/form', locals: { message: Message.new })
+            turbo_stream.update('new_message', partial: 'messages/form', locals: { message: Message.new }),
+            turbo_stream.prepend('messages', partial: 'messages/message', locals: { message: @message })
           ]
         end
         format.html { redirect_to message_url(@message), notice: 'Message was successfully created.' }

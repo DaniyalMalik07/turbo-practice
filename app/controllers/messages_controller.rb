@@ -27,7 +27,9 @@ class MessagesController < ApplicationController
         format.turbo_stream do
           render turbo_stream: [
             turbo_stream.update('new_message', partial: 'messages/form', locals: { message: Message.new }),
-            turbo_stream.prepend('messages', partial: 'messages/message', locals: { message: @message })
+            turbo_stream.prepend('messages', partial: 'messages/message', locals: { message: @message }),
+            turbo_stream.update('message_counter', html: Message.count),
+            turbo_stream.update('notice', html: 'Message created successfully')
           ]
         end
         format.html { redirect_to message_url(@message), notice: 'Message was successfully created.' }
@@ -48,7 +50,10 @@ class MessagesController < ApplicationController
     respond_to do |format|
       if @message.update(message_params)
         format.turbo_stream do
-          render turbo_stream: turbo_stream.update(@message, partial: 'messages/message', locals: { message: @message })
+          render turbo_stream: [
+            turbo_stream.update(@message, partial: 'messages/message', locals: { message: @message }),
+            turbo_stream.update('notice', html: 'Message updated successfully')
+          ]
         end
         format.html { redirect_to message_url(@message), notice: 'Message was successfully updated.' }
         format.json { render :show, status: :ok, location: @message }
@@ -62,9 +67,13 @@ class MessagesController < ApplicationController
   def destroy
     @message.destroy
     respond_to do |format|
-      format.turbo_stream { render turbo_stream: turbo_stream.remove("message_#{@message.id}") }
-      format.html { redirect_to messages_url, notice: 'Message was successfully destroyed.' }
-      format.json { head :no_content }
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.remove("message_#{@message.id}"),
+          turbo_stream.update('message_counter', html: Message.count),
+          turbo_stream.update('notice', html: 'Message deleted successfully')
+        ]
+      end
     end
   end
 
